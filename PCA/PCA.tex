@@ -1,7 +1,8 @@
 % !mode::"TEX:UTF-8"
 \documentclass{article}
 \usepackage{CJKutf8}
-\usepackage{indentfirst}
+\usepackage{indentfirst}      % 设置首行缩进
+\setlength{\parindent}{2em}   % 缩进2个字符
 
 \author{xhj}
 \begin{CJK}{UTF8}{gkai}
@@ -9,15 +10,34 @@
 \end{CJK}
 
 \begin{document}
-\begin{CJK}{UTF8}{gkai}
+\begin{CJK}{UTF8}{gkai}    % 在pdf中能够正确显示中文
 \maketitle
 
 %===================first section===================
 \section{最近重构性}
 最近重构性要求样本点到降维后的超平面的距离之和最短，以此来确定该超平面。
+
 %===================================================
 %===================second section==================
 \section{最大可分性}
+\subsection{基于特征值和特征向量求主成分}
+1、中心化（均值化）。目的是为了方便之后的求解。因为需要求解协方差矩阵，协方差的公式为$cov(x,y)=E\{(x-Ex)(y-Ey)\}$。利用中心化之后的矩阵就可以直接求协方差。\\
+
+2、求协方差矩阵。协方差矩阵的维数由数据的特征的数目决定。
+\begin{equation}
+cov=
+\left(
+\begin{array}{cccc}
+cov(x_0,x_0) & cov(x_0,x_1) & ... & cov(x_0,x_n)\\
+cov(x_1,x_0) & cov(x_1,x_1) & ... & cov(x_1,x_n)\\
+... & ... & ... & ...\\
+cov(x_n,x_0) & cov(x_n,x_1) & ... & cov(x_n,x_n)
+\end{array}
+\right)
+\end{equation}
+通过求解协方差矩阵，可以观察样本中各个特征之间的相关度。通过协方差也可以求解相关系数$\rho$，$\rho=\frac{cov(x,y)}{\sqrt{D(x)D(y)}}$。\\
+
+3、求解协方差矩阵的特征值和特征向量。在协方差矩阵的特征值中选取最大的k个，并且提取它们对应的特征向量。此步骤的目的就是构建一个正交的新的坐标系，因为特征向量都是正交的特征向量，所以
 %===================================================
 \end{CJK}
 \end{document}
