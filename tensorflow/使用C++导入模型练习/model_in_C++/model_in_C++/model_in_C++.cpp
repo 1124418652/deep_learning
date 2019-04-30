@@ -4,7 +4,7 @@
 #include "stdafx.h"
 #include <iostream>
 #include <Python.h>
-#include <windows.h>
+//#include <windows.h>
 using namespace std;
 
 void testImage(char *path)
@@ -44,6 +44,12 @@ void testImage(char *path)
 			Py_Finalize();
 		}
 
+		/*
+		Py_BuildValue() 函数的作用和 PyArg_parseTuple() 的作用相反，它是将 C 类型的数据结
+		构转换成 Python 对象，该函数的原型：
+		PyObject *Py_BuildValue(char *format, ...)
+		该函数可以和
+		*/
 		pArg = Py_BuildValue("(s)", path);
 
 		if (module != NULL)
@@ -62,7 +68,8 @@ void testImage(char *path)
 
 int main()
 {
-	testImage("test.jpg");        // 这里的路径应该是相对于python脚本的路径
+	char *path = "test.jpg";
+	testImage(path);        // 这里的路径应该是相对于python脚本的路径
 	system("pause");
     return 0;
 }
