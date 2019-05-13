@@ -18,8 +18,8 @@ def conv(layer_name, X, kernel_num, kernel_size = (3, 3),
 		layer_name: str 类型，表示该层卷积的名字
 		X: 输入 tensor，维数为 [batch_size, height, width, channels]
 		kernel_num: int 类型，表示卷积核的数目
-		kernel_size: list 或 tupple 类型，表示卷积核的大小，(height, width)
-		strides: list 类型，表示卷积的步长
+		kernel_size: list 或 tupple 类型，表示卷积核的大小，(height, width)																																																																																																																																															
+		strides: list 类型，表示卷积的步长																																																																																																								
 		is_pretrain: boolean 类型，表示该层的卷积核参数是否需要更新
 
 	Returns:
@@ -83,8 +83,85 @@ def my_batch_normalization(X, epsilon = 1e-8):
 	kernel_num = X.shape[-1]    # 因为 X 是执行卷积运算之后的输出，所以 channels 就是该层卷积核的数目
 	shift = tf.Variable(np.zeros([kernel_num]), dtype = tf.float32)
 	scale = tf.Variable(np.ones([kernel_num]), dtype = tf.float32)
-	batch_mean, batch_var = tf.nn.moments(X, axis = [0, 1, 2])
+	batch_mean, batch_var = tf.nn.moments(X, axes = [0, 1, 2])
 	X = tf.nn.batch_normalization(X, mean = batch_mean, variance = batch_var, 
 								  offset = shift, scale = scale, 
 								  variance_epsilon = epsilon)
 	return X
+
+def dense(layer_name, X, num_nodes, activate_type = 'relu'):
+	"""
+	执行全连接层的计算单元
+
+	Args:
+		layer_name: str 类型，表示该全连接层的名字
+		X: 输入 tensor，维数为 (m, feature_num)
+		num_nodes: int 类型，表示该全连接层中节点的数目
+	Returns:
+		X: 全连接层的输出 tensor，维数为 (m, num_nodes)
+	"""
+
+	assert(2 == len(X.shape))
+	num_features = X.shape[-1]
+	with tf.variable_scope(layer_name):
+		W = tf.get_variable(name='weights', shape=(num_features, num_nodes),
+							dtype=tf.float32, initializer=tf.contrib.layers.xavier_initializer())
+		b = tf.get_variable(name='biases', shape=(num_nodes), dtype=tf.float32,
+							initializer=tf.constant_initializer(0.0))
+		X = tf.matmul(X, W)
+		X = tf.nn.bias_add(X, b, name = 'Z')
+		if 'relu' == activate_type:
+			X = tf.nn.relu(X, name = 'relu_activate')
+		elif 'sigmoid' == activate_type:
+			X = tf.nn.sigmoid(X, name = 'sigmoid_activate')
+		elif 'tanh' == activate_type:
+			X = tf.nn.tanh(X, name = 'tanh_activate')
+		return X
+
+def loss_calculate(logits, labels, loss_type = 'cross_entropy'):
+	"""
+	计算前向传播中损失函数的结果
+	
+	Args:
+		logits: 最后一层全连接层的输出
+		labels: 每个样本对应的标签
+		loss_type: 损失函数的类型，{'cross_entropy', 'L2'}
+	"""
+
+	with tf.name_scope('loss') as scope:
+		if 'cross_entropy' == loss_type:
+			cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=labels)
+			loss = tf.reduce_mean(cross_entropy, name='loss')
+			tf.summary.scalar(scope + '/loss' ,loss)
+		elif 'L2' == loss_type:
+			loss = tf.reduce_mean(tf.square(logits - labels), keep_dims=False)
+			tf.summary.scalar(scope+'/loss', loss)
+		return loss
+
+def accuracy_calculate(logits, labels):
+	"""
+	计算验证集的准确性
+	"""
+
+	with tf.name_scope('accuracy') as scope:
+		correct = tf.equal(tf.arg_max(logits, axis = 1), tf.arg_max(labels, axis = 1))
+		correct = tf.cast(correct, dtype = tf.float32)
+		accuracy = tf.reduce_mean(correct) * 100.0
+		tf.summary.scalar(scope+'accuracy', accuracy)
+		return accuracy
+
+def optimizer(loss, optimizer_type = 'Adam', lr = 1e-4):
+	"""
+	设置网络的优化器
+
+	Args:
+		loss: 计算得到的损失函数
+		optimizer_type: str类型，设置优化器的类型，{'Adam', 'SGD'}
+		lr: 设置网络的学习率
+	"""
+
+	if optimizer_type == 'Adam':
+		train_step = tf.train.AdamOptimizer(learning_rate=lr).minimize(loss)
+	elif optimizer_type == 'SGD':
+		train_step = tf.train.GradientDescentOptimizer(learning_rate=lr).minimize(loss)
+	return train_step
