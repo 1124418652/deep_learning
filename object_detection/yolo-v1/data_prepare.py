@@ -36,6 +36,8 @@ class load_data(object):
         objs = tree.findall('object')
         for obj in objs:
             box = obj.find('bndbox')
-            x1 = float(box.find('xmin').text)
-            y1 = float(box.find('ymin').text)
+            x1 = max(float(box.find('xmin').text), 0)
+            y1 = max(float(box.find('ymin').text), 0)
+            x2 = max(float(box.find('xmax').text), 0)
+            y2 = max(float(box.find('ymin').text), 0)
 
